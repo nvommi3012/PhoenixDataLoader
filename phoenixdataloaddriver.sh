@@ -1,0 +1,41 @@
+#Intel Corporation
+
+#Phoenix Data Load Driver - Triggers the transfer from SQL Server to HBase via Phoenix
+
+#!/bin/bash
+
+SQLSERVER_IP="54.201.216.177"
+SQLSERVER_PORT="1433"
+SQLSERVER_DB="ePO_DNVPRODePOPOD2"
+SQLSERVER_USER="sa"
+SQLSERVER_PASSWORD="welcome2intel$"
+
+PHOENIX_IP="54.187.65.66"
+
+INSERT_THREADS=20
+REUSABILITY_FACTOR=5
+BATCH_SIZE=100
+SQLTABLE="EPOEVENTSMT"
+PHOENIXTABLE="EPOEVENTSMTREP"
+#OFFSET
+START_ROW=0
+STOP_ROW=500000
+
+
+
+
+RUN_LIMIT=`expr $INSERT_THREADS \* $REUSABILITY_FACTOR \* $BATCH_SIZE`
+
+sudo rm *.class
+javac Phoenix_Dataloader.java
+
+until [ $START_ROW -ge $STOP_ROW  ]
+do
+	sleep 5
+	echo "Starting transfer of Data from ROW - $START_ROW" 
+	java Phoenix_Dataloader $SQLSERVER_IP $SQLSERVER_PORT $SQLSERVER_DB $SQLSERVER_USER $SQLSERVER_PASSWORD $PHOENIX_IP $INSERT_THREADS $REUSABILITY_FACTOR $BATCH_SIZE $SQLTABLE $PHOENIXTABLE $START_ROW
+	START_ROW=`expr $START_ROW + $RUN_LIMIT`
+	echo "$START_ROW Rows of $SQLTABLE Transfered Successfully"
+done
+
+sudo rm *.class
